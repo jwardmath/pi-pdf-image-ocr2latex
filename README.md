@@ -99,6 +99,12 @@ Create `~/.pi/agent/image2tikz.json`:
 | `model` | string | `qwen2.5vl:7b` | Vision model id |
 | `swapModel` | boolean | `false` | Also switch the session's active model during a run (restored afterward) |
 
+#### About `swapModel`
+
+`/img2tikz` already invokes the vision model **directly** for the image→TikZ conversion — independently of Pi's "active" session model. You do **not** need a vision-capable model as your active model, and you do **not** need `swapModel` for the conversion to work.
+
+`swapModel` only matters if you want the *agent's own dialogue* during that turn to also run on the vision model (e.g. to reason about the image in the conversation). Leave it `false` unless you specifically want that.
+
 #### Configuring your own model
 
 Change the two `provider`/`model` keys in `~/.pi/agent/image2tikz.json` to point at any vision model Pi already knows about.
@@ -125,7 +131,7 @@ Change the two `provider`/`model` keys in `~/.pi/agent/image2tikz.json` to point
 
 Any vision-capable model on a configured provider works — no code changes needed.
 
-> **Note:** `provider`/`model` affect only the vision call itself. To also make the follow-up turn use the vision model, set `"swapModel": true` (or pass `--swap-model`).
+> **Note:** `provider`/`model` affect only the vision call itself — which already uses the configured vision model directly, so no session swap is needed. See [About `swapModel`](#about-swapmodel) above.
 
 ---
 
