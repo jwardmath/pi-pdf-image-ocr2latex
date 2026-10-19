@@ -138,13 +138,21 @@ Any vision-capable model on a configured provider works — no code changes need
 ## Install
 
 ```bash
-pi install git:github.com/jwardmath/pi-pdf-image-ocr2latex@v1
+pi install npm:pi-pdf-image-ocr2latex
 ```
 
 Then restart Pi (or run `/reload`). Try without installing:
 
 ```bash
-pi -e git:github.com/jwardmath/pi-pdf-image-ocr2latex
+pi -e npm:pi-pdf-image-ocr2latex
+```
+
+### Install from GitHub (alternative)
+
+The source is also available on GitHub:
+
+```bash
+pi install git:github.com/jwardmath/pi-pdf-image-ocr2latex@v1
 ```
 
 ---
