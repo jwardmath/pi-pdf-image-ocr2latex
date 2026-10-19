@@ -11,6 +11,10 @@
  *
  * Output written next to each input as `<basename>.tikz.tex`.
  *
+ * Configuration is stored locally in `~/.pi/agent/image2tikz.json`:
+ *   { "provider": "ollama", "model": "qwen2.5vl:7b", "swapModel": false }
+ * Precedence: CLI flags > config file > env vars > built-in defaults.
+ *
  * Usage from the TUI:
  *   /img2tikz path/to/diagram.png
  *   /img2tikz path/to/report.pdf --model qwen2.5vl:7b --scale 2 --out dir
@@ -22,9 +26,9 @@
 
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, readdirSync, rmSync } from "node:fs";
-import { extname, join, resolve, basename, dirname, relative, delimiter } from "node:path";
+import { extname, join, resolve, basename, dirname, relative, delimiter, isAbsolute } from "node:path";
 import { randomBytes } from "node:crypto";
-import { tmpdir } from "node:os";
+import { tmpdir, homedir } from "node:os";
 import { defineTool, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "@earendil-works/pi-ai";
 import type { Context, Message, ImageContent } from "@earendil-works/pi-ai";
@@ -33,9 +37,59 @@ import type { Context, Message, ImageContent } from "@earendil-works/pi-ai";
 // Configuration / constants
 // ---------------------------------------------------------------------------
 
-const DEFAULT_MODEL = process.env.PI_IMG2TIKZ_MODEL?.trim() || "qwen2.5vl:7b";
-const DEFAULT_PROVIDER = process.env.PI_IMG2TIKZ_PROVIDER?.trim() || "ollama";
+const HARD_DEFAULT_MODEL = "qwen2.5vl:7b";
+const HARD_DEFAULT_PROVIDER = "ollama";
 const MAX_PAGES = 300;
+
+interface Img2TikzConfig {
+  provider?: string;
+  model?: string;
+  swapModel?: boolean;
+}
+
+/** Resolve the agent directory (`~/.pi/agent`) so we can load a local config file. */
+function getAgentDir(): string {
+  const envDir = process.env.PI_CODING_AGENT_DIR?.trim();
+  if (envDir) return resolve(envDir);
+  return join(homedir(), ".pi", "agent");
+}
+
+/**
+ * Load the local config file `image2tikz.json` from the agent directory.
+ * This is the primary, persistent way to configure the vision provider/model
+ * without environment variables or per-command flags.
+ *
+ * Optional override path via `PI_IMG2TIKZ_CONFIG` (absolute path or relative
+ * to the agent directory).
+ *
+ * Precedence (highest first):
+ *   1. CLI flags (`--provider`, `--model`, `--swap-model`)
+ *   2. this config file
+ *   3. environment variables (`PI_IMG2TIKZ_PROVIDER`, `PI_IMG2TIKZ_MODEL`)
+ *   4. hard-coded defaults
+ */
+function loadConfig(): Img2TikzConfig {
+  const agentDir = getAgentDir();
+  const envConfig = process.env.PI_IMG2TIKZ_CONFIG?.trim();
+  const configPath = envConfig ? (isAbsolute(envConfig) ? envConfig : join(agentDir, envConfig)) : join(agentDir, "image2tikz.json");
+  try {
+    if (existsSync(configPath)) {
+      const parsed = JSON.parse(readFileSync(configPath, "utf8"));
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Img2TikzConfig;
+      }
+    }
+  } catch {
+    // Malformed or unreadable config — fall through to defaults.
+  }
+  return {};
+}
+
+// Resolve effective defaults at module load: config file > env > hard default.
+const _config = loadConfig();
+const DEFAULT_MODEL = (typeof _config.model === "string" && _config.model.trim()) || process.env.PI_IMG2TIKZ_MODEL?.trim() || HARD_DEFAULT_MODEL;
+const DEFAULT_PROVIDER = (typeof _config.provider === "string" && _config.provider.trim()) || process.env.PI_IMG2TIKZ_PROVIDER?.trim() || HARD_DEFAULT_PROVIDER;
+const DEFAULT_SWAP_MODEL = _config.swapModel === true;
 
 const SYSTEM_PROMPT =
   "Act as an expert LaTeX typesetter. Analyze this uploaded diagram/sketch and write a " +
@@ -529,7 +583,8 @@ export default function (pi: ExtensionAPI) {
       //     swapping the active session model is only needed when the user
       //     explicitly wants it (e.g. to have the follow-up turn use the
       //     vision model). ---
-      const wantSwap = opts["swap-model"] === true || opts.swap === true;
+      const wantSwap =
+        opts["swap-model"] === true || opts.swap === true || DEFAULT_SWAP_MODEL;
       const previousModel = ctx.model;
       const visionModel = ctx.modelRegistry.find(resolvedOpts.provider, resolvedOpts.model);
       let switched = false;
