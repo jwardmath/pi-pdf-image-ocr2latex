@@ -2,8 +2,21 @@
   "name": "pi-pdf-image-ocr2latex",
   "version": "1.0.0",
   "description": "Convert images/PDFs to LaTeX TikZ with a pluggable vision model and compile to PDF.",
-  "keywords": ["pi-package", "latex", "tikz", "vision", "pdf"],
+  "keywords": ["pi-package", "latex", "tikz", "vision", "pdf", "ocr", "image-to-latex"],
   "license": "MIT",
+  "author": "jwardmath",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jwardmath/pi-pdf-image-ocr2latex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jwardmath/pi-pdf-image-ocr2latex/issues"
+  },
+  "homepage": "https://github.com/jwardmath/pi-pdf-image-ocr2latex#readme",
+  "files": [
+    "extensions",
+    "image2tikz.example.json"
+  ],
   "pi": {
     "extensions": [
       "extensions/image-to-tikz.ts",
