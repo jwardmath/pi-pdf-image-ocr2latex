@@ -1,0 +1,22 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Compiled output (users generate these locally)
+*.pdf
+
+# Node modules
+node_modules/
+
+# OS / editor
+.DS_Store
+Thumbs.db
