@@ -1,8 +1,16 @@
 {
   "name": "pi-pdf-image-ocr2latex",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Convert images/PDFs to LaTeX TikZ with a pluggable vision model and compile to PDF.",
-  "keywords": ["pi-package", "latex", "tikz", "vision", "pdf", "ocr", "image-to-latex"],
+  "keywords": [
+    "pi-package",
+    "latex",
+    "tikz",
+    "vision",
+    "pdf",
+    "ocr",
+    "image-to-latex"
+  ],
   "license": "MIT",
   "author": "jwardmath",
   "repository": {
